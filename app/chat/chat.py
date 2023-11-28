@@ -10,6 +10,8 @@ from app.web.api import (
     get_conversation_components,
 )
 from app.chat.score import random_component_by_score
+from app.chat.tracing.langfuse import langfuse
+from langfuse.model import CreateTrace
 
 
 def select_component(component_type: str, component_map: dict, chat_args: ChatArgs):
@@ -61,9 +63,17 @@ def build_chat(chat_args: ChatArgs):
         memory_name=memory_name
     )
     condense_question_llm = ChatOpenAI(streaming=False)
+
+    trace = langfuse.trace(
+        CreateTrace(
+            id=chat_args.conversation_id,
+            metadata=chat_args.metadata,
+        )
+    )
     return StreamingConversationalRetrievalChain.from_llm(
         retriever=retriever,
         memory=memory,
         llm=llm,
-        condense_question_llm=condense_question_llm
+        condense_question_llm=condense_question_llm,
+        callbacks=[trace.getNewHandler()],
     )
