@@ -1,6 +1,17 @@
 from app.chat.redis import client
 
 
+def random_component_by_score(component_type: str, component_map: dict):
+    # Make sure component_type is 'llm', 'retriever', or'memory'
+    if component_type not in ["llm", "retriever", "memory"]:
+        raise ValueError(
+            f"component_type must be 'llm','retriever', or'memory', not {component_type}")
+
+    # From redis, get the hash containing the sum total scores for the given component_type
+    values = client.hgetall(f"{component_type}_score_values")
+    counts = client.hgetall(f"{component_type}_score_count")
+
+
 def score_conversation(
     conversation_id: str, score: float, llm: str, retriever: str, memory: str
 ) -> None:
